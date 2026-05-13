@@ -4,6 +4,36 @@ Add a fully wired resource to the API — Prisma model, Express CRUD routes, and
 
 ---
 
+## Rule — Always preview changes and get approval before executing
+
+After completing Step 1 (gathering requirements) and before touching any files or running any commands, present the user with a full summary of every change that will be made. Format it as a checklist, for example:
+
+```
+Here is what will be created/modified:
+
+Schema
+  ✦ prisma/schema.prisma — add Order model (quantity Int, totalPrice Float, status String, notes String?)
+  ✦ prisma/schema.prisma — add orders Order[] back-relation to Product
+
+Database
+  ✦ Run: npx prisma migrate dev --name add-order
+  ✦ Run: npm run db:generate
+
+Files
+  ✦ CREATE src/routes/order.ts — CRUD routes with requireApiKey middleware
+  ✦ EDIT   src/app.ts — import and mount orderRouter at /orders
+  ✦ CREATE src/routes/order.test.ts — 18 tests across all endpoints
+
+Tests
+  ✦ Run: npm test
+```
+
+Then ask: **"Does this look correct? Should I proceed?"**
+
+Do not write any files, edit any files, or run any commands until the user confirms. If the user requests changes, update the plan and show it again before proceeding.
+
+---
+
 ## Step 1 — Gather requirements
 
 Ask the user for the following. Collect everything before proceeding.
@@ -13,6 +43,7 @@ Singular PascalCase (e.g. `Order`, `Customer`, `Invoice`). Used for the Prisma m
 
 **2. Fields**
 For each field, collect:
+
 - Field name (camelCase)
 - Prisma scalar type: `String`, `Int`, `Float`, `Boolean`, or `DateTime`
 - Optional? (`true` → append `?` to type; `false` → required)
@@ -21,6 +52,7 @@ Do NOT ask for `id`, `createdAt`, or `updatedAt` — these are always added auto
 
 **3. Relations (optional)**
 For each relation to an existing model:
+
 - Field name (e.g. `category`)
 - Related model name (must already exist in `prisma/schema.prisma`)
 - This always generates a many-to-one (foreign key) relation
@@ -30,6 +62,7 @@ Yes or No. If yes, apply `requireApiKey` middleware at the router level, protect
 
 **5. Schema sync method**
 Ask whether to:
+
 - **Migrate** — creates a versioned migration file (`prisma migrate dev`)
 - **Push** — applies changes directly without a migration file (`prisma db push`), ideal for local prototyping
 
@@ -52,16 +85,19 @@ model {Name} {
 ```
 
 **Scalar field format:**
+
 - Required: `fieldName  FieldType`
-- Optional:  `fieldName  FieldType?`
+- Optional: `fieldName  FieldType?`
 
 **Many-to-one relation format** (for each relation the user specified):
+
 ```prisma
     {relatedModel}    {RelatedModel}  @relation(fields: [{relatedModel}Id], references: [id])
     {relatedModel}Id  String
 ```
 
 Also open the related model in `prisma/schema.prisma` and add the back-relation array field inside it:
+
 ```prisma
     {pluralName}  {Name}[]
 ```
@@ -73,16 +109,19 @@ Also open the related model in `prisma/schema.prisma` and add the back-relation 
 Run whichever command the user chose in Step 1:
 
 **Migrate (versioned):**
+
 ```bash
 npx prisma migrate dev --name add-{lowercaseName}
 ```
 
 **Push (prototyping):**
+
 ```bash
 npx prisma db push
 ```
 
 After either command, regenerate the Prisma client so TypeScript knows about the new model:
+
 ```bash
 npm run db:generate
 ```
@@ -212,11 +251,11 @@ const update{Name}Schema = create{Name}Schema.partial();
 **Zod type mapping:**
 | Prisma type | Zod validator (required) | Zod validator (optional) |
 |-------------|--------------------------|--------------------------|
-| `String`    | `z.string().min(1)`      | `z.string().optional()`  |
-| `Int`       | `z.number().int()`       | `z.number().int().optional()` |
-| `Float`     | `z.number()`             | `z.number().optional()`  |
-| `Boolean`   | `z.boolean()`            | `z.boolean().optional()` |
-| `DateTime`  | `z.coerce.date()`        | `z.coerce.date().optional()` |
+| `String` | `z.string().min(1)` | `z.string().optional()` |
+| `Int` | `z.number().int()` | `z.number().int().optional()` |
+| `Float` | `z.number()` | `z.number().optional()` |
+| `Boolean` | `z.boolean()` | `z.boolean().optional()` |
+| `DateTime` | `z.coerce.date()` | `z.coerce.date().optional()` |
 
 For `update{Name}Schema`, always use `.partial()` on the create schema so all fields become optional.
 
@@ -276,6 +315,7 @@ const mock{Name} = {
 ```
 
 **Auth middleware block** (only if auth is required):
+
 ```typescript
 describe("Auth middleware", () => {
     it("rejects requests with no API key", async () => {
