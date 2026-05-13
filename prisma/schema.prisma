@@ -16,6 +16,21 @@ model Product {
   imageUrl    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  orders      Order[]
 
   @@map("products")
+}
+
+model Order {
+  id         String   @id @default(cuid())
+  quantity   Int
+  totalPrice Float
+  status     String
+  notes      String?
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("orders")
 }
